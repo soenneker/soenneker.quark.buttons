@@ -1,0 +1,118 @@
+@using Microsoft.AspNetCore.Components.Web
+@using Microsoft.AspNetCore.Components.Routing
+@using Soenneker.Extensions.String
+@inherits Soenneker.Quark.Components.Element
+@inject NavigationManager Navigation
+
+@if (Type == ButtonType.Link)
+{
+	<NavLink href="@To" @attributes="BuildAttributes()">
+			@ChildContent
+	</NavLink>
+}
+else
+{
+	<button @attributes="BuildAttributes()">
+		@if (Loading)
+		{
+			<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+		}
+		@if (LoadingTemplate != null && Loading)
+		{
+			@LoadingTemplate
+		}
+		else
+		{
+			@ChildContent
+		}
+	</button>
+}
+
+@code {
+
+	[Parameter]
+	public ButtonType Type { get; set; } = ButtonType.Button;
+
+	[Parameter]
+	public bool Disabled { get; set; }
+
+	[Parameter]
+	public bool Loading { get; set; }
+
+	[Parameter]
+	public RenderFragment? LoadingTemplate { get; set; }
+
+	[Parameter]
+	public string? Value { get; set; }
+
+	[Parameter]
+	public string? Name { get; set; }
+
+	[Parameter]
+	public string? Form { get; set; }
+
+	[Parameter]
+	public bool AutoFocus { get; set; }
+
+	[Parameter]
+	public string? To { get; set; }
+
+	[Parameter]
+	public new int? TabIndex { get; set; }
+
+	protected override Dictionary<string, object> BuildAttributes()
+	{
+		Dictionary<string, object> attributes = base.BuildAttributes();
+
+		// Add default Bootstrap button classes if no class is specified
+		if (!Class.HasContent())
+		{
+			attributes["class"] = AppendToClass(attributes.GetValueOrDefault("class")?.ToString(), "btn btn-primary");
+		}
+
+		// Only add type attribute for button elements, not anchor elements
+		if (!To.HasContent())
+		{
+			attributes["type"] = Type.ToString().ToLowerInvariant();
+		}
+
+		if (Disabled || Loading)
+			attributes["disabled"] = true;
+
+		if (Value.HasContent())
+			attributes["value"] = Value;
+
+		if (Name.HasContent())
+			attributes["name"] = Name;
+
+		if (Form.HasContent())
+			attributes["form"] = Form;
+
+		if (AutoFocus)
+			attributes["autofocus"] = true;
+
+		if (TabIndex.HasValue)
+			attributes["tabindex"] = TabIndex.Value;
+
+		if (To.HasContent())
+		{
+			attributes["role"] = "button";
+		}
+
+		return attributes;
+	}
+
+	protected override async Task HandleClick(MouseEventArgs args)
+	{
+		if (!Disabled && !Loading)
+		{
+			// Handle programmatic navigation if To is set but we're not using NavLink
+			if (To.HasContent() && !To.StartsWith("#"))
+			{
+				Navigation.NavigateTo(To);
+			}
+			
+			await base.HandleClick(args);
+		}
+	}
+}

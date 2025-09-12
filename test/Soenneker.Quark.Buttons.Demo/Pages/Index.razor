@@ -1,0 +1,169 @@
+﻿@page "/"
+@using Microsoft.Extensions.Logging
+@using Soenneker.Quark.Buttons
+
+@inject ILogger<Index> Logger
+
+<img src="https://user-images.githubusercontent.com/4441470/224455560-91ed3ee7-f510-4041-a8d2-3fc093025112.png" />
+<h1>Soenneker.Quark.Buttons demo</h1>
+<p>This page demonstrates some of the common usages for the button library.</p>
+<br />
+
+<hr />
+
+<div>
+    <h2>Basic Buttons</h2>
+    <div class="mb-3">
+        <Button Class="btn btn-primary me-2" OnClick="HandleBasicClick">Primary Button</Button>
+        <Button Class="btn btn-secondary me-2" OnClick="HandleBasicClick">Secondary Button</Button>
+        <Button Class="btn btn-success me-2" OnClick="HandleBasicClick">Success Button</Button>
+        <Button Class="btn btn-danger me-2" OnClick="HandleBasicClick">Danger Button</Button>
+    </div>
+</div>
+
+<hr />
+
+<div>
+    <h2>Button Types</h2>
+    <div class="mb-3">
+        <Button Class="btn btn-outline-primary me-2" Type="ButtonType.Button" OnClick="HandleBasicClick">Button Type</Button>
+        <Button Class="btn btn-outline-secondary me-2" Type="ButtonType.Submit" OnClick="HandleBasicClick">Submit Type</Button>
+        <Button Class="btn btn-outline-warning me-2" Type="ButtonType.Reset" OnClick="HandleBasicClick">Reset Type</Button>
+    </div>
+</div>
+
+<hr />
+
+<div>
+    <h2>Disabled Buttons</h2>
+    <div class="mb-3">
+        <Button Class="btn btn-primary me-2" Disabled="true">Disabled Primary</Button>
+        <Button Class="btn btn-secondary me-2" Disabled="true">Disabled Secondary</Button>
+    </div>
+</div>
+
+<hr />
+
+<div>
+    <h2>Loading Buttons</h2>
+    <div class="mb-3">
+        <Button Class="btn btn-primary me-2" Loading="@isLoading" OnClick="HandleLoadingClick">
+            Click to Load
+        </Button>
+        <Button Class="btn btn-success me-2" Loading="@isLoading2" OnClick="HandleLoadingClick2">
+            Process Data
+        </Button>
+        <Button Class="btn btn-info me-2" Loading="@isLoading3" OnClick="HandleLoadingClick3">
+            Custom Loading
+        </Button>
+    </div>
+</div>
+
+<hr />
+
+<div>
+    <h2>Button with Custom Loading Template</h2>
+    <div class="mb-3">
+        <Button Class="btn btn-warning me-2" Loading="@isLoading4" OnClick="HandleLoadingClick4" LoadingTemplate="@CustomLoadingTemplate">
+            Custom Template
+        </Button>
+    </div>
+</div>
+
+<hr />
+
+<div>
+    <h2>Button Attributes</h2>
+    <div class="mb-3">
+        <Button Class="btn btn-dark me-2" Name="testButton" Value="testValue" OnClick="HandleBasicClick">Named Button</Button>
+        <Button Class="btn btn-light me-2" AutoFocus="true" OnClick="HandleBasicClick">Auto Focus</Button>
+    </div>
+</div>
+
+<hr />
+
+<div>
+    <h2>Click Events</h2>
+    <div class="mb-3">
+        <Button Class="btn btn-primary me-2" OnClick="HandleClickWithData">Click Counter: @clickCount</Button>
+        <p class="text-muted">Last clicked at: @lastClickTime</p>
+    </div>
+</div>
+
+@code {
+    private bool isLoading = false;
+    private bool isLoading2 = false;
+    private bool isLoading3 = false;
+    private bool isLoading4 = false;
+    private int clickCount = 0;
+    private string lastClickTime = "";
+
+    private RenderFragment CustomLoadingTemplate => @<div>
+        <span class="spinner-grow spinner-grow-sm me-2" role="status" aria-hidden="true"></span>
+        <span class="text-warning">Custom Loading...</span>
+    </div>;
+
+    private async Task HandleBasicClick(MouseEventArgs args)
+    {
+        Logger.LogInformation("Basic button clicked");
+    }
+
+    private async Task HandleLoadingClick(MouseEventArgs args)
+    {
+        isLoading = true;
+        StateHasChanged();
+        
+        // Simulate async operation
+        await Task.Delay(3000);
+        
+        isLoading = false;
+        StateHasChanged();
+    }
+
+    private async Task HandleLoadingClick2(MouseEventArgs args)
+    {
+        isLoading2 = true;
+        StateHasChanged();
+        
+        // Simulate async operation
+        await Task.Delay(2000);
+        
+        isLoading2 = false;
+        StateHasChanged();
+    }
+
+    private async Task HandleLoadingClick3(MouseEventArgs args)
+    {
+        isLoading3 = true;
+        StateHasChanged();
+        
+        // Simulate async operation
+        await Task.Delay(2500);
+        
+        isLoading3 = false;
+        StateHasChanged();
+    }
+
+    private async Task HandleLoadingClick4(MouseEventArgs args)
+    {
+        isLoading4 = true;
+        StateHasChanged();
+        
+        // Simulate async operation
+        await Task.Delay(4000);
+        
+        isLoading4 = false;
+        StateHasChanged();
+    }
+
+    private async Task HandleClickWithData(MouseEventArgs args)
+    {
+        clickCount++;
+        lastClickTime = DateTime.Now.ToString("HH:mm:ss");
+        StateHasChanged();
+    }
+
+    protected override void OnInitialized()
+    {
+    }
+}
