@@ -90,8 +90,8 @@ else
 		if (!Class.HasContent())
 		{
 			var baseClasses = "btn";
-			var colorClass = GetColorClass();
-			var sizeClass = GetSizeClass();
+			string? colorClass = GetColorClass();
+			string? sizeClass = GetSizeClass();
 
 			if (colorClass != null)
 			{
@@ -113,16 +113,16 @@ else
 		else
 		{
 			// If class is specified, still add color and size classes if not already present
-			var currentClass = attributes.GetValueOrDefault("class")
+			string currentClass = attributes.GetValueOrDefault("class")
 				?.ToString() ?? "";
 
-			var colorClass = GetColorClass();
+			string? colorClass = GetColorClass();
 			if (colorClass != null && !currentClass.Contains(colorClass))
 			{
 				currentClass = AppendToClass(currentClass, colorClass);
 			}
 
-			var sizeClass = GetSizeClass();
+			string? sizeClass = GetSizeClass();
 			if (sizeClass != null && !currentClass.Contains(sizeClass))
 			{
 				currentClass = AppendToClass(currentClass, sizeClass);
