@@ -65,7 +65,7 @@ else
 		attributes.Remove("onclick");
 
 		// Add default Bootstrap button classes if no class is specified
-		if (!Class.HasContent())
+		if (Class.IsNullOrEmpty())
 		{
 			attributes["class"] = AppendToClass(attributes.GetValueOrDefault("class")?.ToString(), "btn btn-primary");
 		}
@@ -73,7 +73,7 @@ else
 		// Only add type attribute for button elements, not anchor elements
 		if (!To.HasContent())
 		{
-			attributes["type"] = Type.ToString().ToLowerInvariant();
+			attributes["type"] = Type.Value;
 		}
 
 		// Check if disabled attribute was passed without a value (HTML-style boolean attribute)
