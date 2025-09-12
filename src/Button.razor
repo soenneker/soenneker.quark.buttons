@@ -2,21 +2,23 @@
 @using Microsoft.AspNetCore.Components.Routing
 @using Soenneker.Extensions.String
 @using Soenneker.Quark.Buttons.Enums
+@using Soenneker.Quark.Enums.Colors
+@using Soenneker.Quark.Enums.Size
 @inherits Soenneker.Quark.Components.Element
 @inject NavigationManager Navigation
 
 @if (Type == ButtonType.Link)
 {
-	<NavLink href="@To" @attributes="BuildAttributes()">
-			@ChildContent
+	<NavLink href="@To" @attributes="BuildAttributes()" >
+		@ChildContent
 	</NavLink>
 }
 else
 {
-	<button @attributes="BuildAttributes()" @onclick="HandleClick">
+	<button @attributes="BuildAttributes()" @onclick="HandleClick" >
 		@if (Loading)
 		{
-			<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+			<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true" ></span>
 		}
 		@if (LoadingTemplate != null && Loading)
 		{
@@ -30,6 +32,7 @@ else
 }
 
 @code {
+
 	[Parameter]
 	public ButtonType Type { get; set; } = ButtonType.Button;
 
@@ -57,6 +60,25 @@ else
 	[Parameter]
 	public string? To { get; set; }
 
+	[Parameter]
+	public Size Size { get; set; } = Size.Default;
+
+	[Parameter]
+	public Color Color { get; set; } = Color.Primary;
+
+	private string? GetSizeClass()
+	{
+		if (Size != Size.Default)
+			return $"btn-{Size.Value}";
+
+		return null;
+	}
+
+	private string? GetColorClass()
+	{
+		return $"btn-{Color.Value}";
+	}
+
 	protected override Dictionary<string, object> BuildAttributes()
 	{
 		Dictionary<string, object> attributes = base.BuildAttributes();
@@ -65,9 +87,48 @@ else
 		attributes.Remove("onclick");
 
 		// Add default Bootstrap button classes if no class is specified
-		if (Class.IsNullOrEmpty())
+		if (!Class.HasContent())
 		{
-			attributes["class"] = AppendToClass(attributes.GetValueOrDefault("class")?.ToString(), "btn btn-primary");
+			var baseClasses = "btn";
+			var colorClass = GetColorClass();
+			var sizeClass = GetSizeClass();
+
+			if (colorClass != null)
+			{
+				baseClasses = $"{baseClasses} {colorClass}";
+			}
+			else
+			{
+				baseClasses = $"{baseClasses} btn-primary"; // default color
+			}
+
+			if (sizeClass != null)
+			{
+				baseClasses = $"{baseClasses} {sizeClass}";
+			}
+
+			attributes["class"] = AppendToClass(attributes.GetValueOrDefault("class")
+				?.ToString(), baseClasses);
+		}
+		else
+		{
+			// If class is specified, still add color and size classes if not already present
+			var currentClass = attributes.GetValueOrDefault("class")
+				?.ToString() ?? "";
+
+			var colorClass = GetColorClass();
+			if (colorClass != null && !currentClass.Contains(colorClass))
+			{
+				currentClass = AppendToClass(currentClass, colorClass);
+			}
+
+			var sizeClass = GetSizeClass();
+			if (sizeClass != null && !currentClass.Contains(sizeClass))
+			{
+				currentClass = AppendToClass(currentClass, sizeClass);
+			}
+
+			attributes["class"] = currentClass;
 		}
 
 		// Only add type attribute for button elements, not anchor elements
@@ -124,8 +185,9 @@ else
 			{
 				Navigation.NavigateTo(To);
 			}
-			
+
 			await base.HandleClick(args);
 		}
 	}
+
 }
