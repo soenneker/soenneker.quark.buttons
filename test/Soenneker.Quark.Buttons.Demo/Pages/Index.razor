@@ -1,6 +1,7 @@
 ﻿@page "/"
 @using Microsoft.Extensions.Logging
 @using Soenneker.Quark.Buttons
+@using ButtonType = Soenneker.Quark.Buttons.Enums.ButtonType
 
 @inject ILogger<Index> Logger
 
@@ -26,9 +27,9 @@
 <div>
     <h2>Button Types</h2>
     <div class="mb-3">
-        <Button Class="btn btn-outline-primary me-2" Type="ButtonType.Button" OnClick="HandleBasicClick">Button Type</Button>
-        <Button Class="btn btn-outline-secondary me-2" Type="ButtonType.Submit" OnClick="HandleBasicClick">Submit Type</Button>
-        <Button Class="btn btn-outline-warning me-2" Type="ButtonType.Reset" OnClick="HandleBasicClick">Reset Type</Button>
+        <Button Class="btn btn-outline-primary me-2" Type="@ButtonType.Link" OnClick="HandleBasicClick">Link Type</Button>
+        <Button Class="btn btn-outline-secondary me-2" Type="@ButtonType.Submit" OnClick="HandleBasicClick">Submit Type</Button>
+        <Button Class="btn btn-outline-warning me-2" Type="@ButtonType.Reset" OnClick="HandleBasicClick">Reset Type</Button>
     </div>
 </div>
 
@@ -37,8 +38,10 @@
 <div>
     <h2>Disabled Buttons</h2>
     <div class="mb-3">
-        <Button Class="btn btn-primary me-2" Disabled="true">Disabled Primary</Button>
-        <Button Class="btn btn-secondary me-2" Disabled="true">Disabled Secondary</Button>
+        <Button Class="btn btn-primary me-2" Disabled>Disabled Primary (HTML-style)</Button>
+        <Button Class="btn btn-secondary me-2" Disabled="@true">Disabled Secondary (explicit true)</Button>
+        <Button Class="btn btn-success me-2" Disabled="@false">Enabled Success (explicit false)</Button>
+        <Button Class="btn btn-info me-2">Enabled Info (no disabled attribute)</Button>
     </div>
 </div>
 
@@ -47,13 +50,13 @@
 <div>
     <h2>Loading Buttons</h2>
     <div class="mb-3">
-        <Button Class="btn btn-primary me-2" Loading="@isLoading" OnClick="HandleLoadingClick">
+        <Button Class="btn btn-primary me-2" Loading="isLoading" OnClick="HandleLoadingClick">
             Click to Load
         </Button>
-        <Button Class="btn btn-success me-2" Loading="@isLoading2" OnClick="HandleLoadingClick2">
+        <Button Class="btn btn-success me-2" Loading="isLoading2" OnClick="HandleLoadingClick2">
             Process Data
         </Button>
-        <Button Class="btn btn-info me-2" Loading="@isLoading3" OnClick="HandleLoadingClick3">
+        <Button Class="btn btn-info me-2" Loading="isLoading3" OnClick="HandleLoadingClick3">
             Custom Loading
         </Button>
     </div>
@@ -64,7 +67,7 @@
 <div>
     <h2>Button with Custom Loading Template</h2>
     <div class="mb-3">
-        <Button Class="btn btn-warning me-2" Loading="@isLoading4" OnClick="HandleLoadingClick4" LoadingTemplate="@CustomLoadingTemplate">
+        <Button Class="btn btn-warning me-2" Loading="isLoading4" OnClick="HandleLoadingClick4" LoadingTemplate="@CustomLoadingTemplate">
             Custom Template
         </Button>
     </div>
@@ -106,6 +109,7 @@
     private async Task HandleBasicClick(MouseEventArgs args)
     {
         Logger.LogInformation("Basic button clicked");
+		await Task.CompletedTask;
     }
 
     private async Task HandleLoadingClick(MouseEventArgs args)
@@ -160,7 +164,7 @@
     {
         clickCount++;
         lastClickTime = DateTime.Now.ToString("HH:mm:ss");
-        StateHasChanged();
+        await Task.CompletedTask; // Ensure async method completes properly
     }
 
     protected override void OnInitialized()
