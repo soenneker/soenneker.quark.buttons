@@ -1,24 +1,24 @@
 @using Microsoft.AspNetCore.Components.Web
-@using Microsoft.AspNetCore.Components.Routing
 @using Soenneker.Extensions.String
 @using Soenneker.Quark.Buttons.Enums
 @using Soenneker.Quark.Enums.Colors
 @using Soenneker.Quark.Enums.Size
+@using Soenneker.Quark.Anchors
+@using Soenneker.Quark.Spans
+
 @inherits Soenneker.Quark.Components.Element
 @inject NavigationManager Navigation
 
 @if (Type == ButtonType.Link)
 {
-	<NavLink href="@To" @attributes="BuildAttributes()" >
-		@ChildContent
-	</NavLink>
+	<Anchor To="To" Attributes="BuildAttributes()"></Anchor>
 }
 else
 {
 	<button @attributes="BuildAttributes()" @onclick="HandleClick" >
 		@if (Loading)
 		{
-			<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true" ></span>
+			<Span Class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></Span>
 		}
 		@if (LoadingTemplate != null && Loading)
 		{
