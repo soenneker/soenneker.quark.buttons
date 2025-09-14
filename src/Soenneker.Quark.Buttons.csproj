@@ -41,7 +41,7 @@
     </ItemGroup>
 
     <ItemGroup>
-        <PackageReference Include="Soenneker.Quark.Anchors" Version="3.0.3" />
+        <PackageReference Include="Soenneker.Quark.Anchors" Version="3.0.4" />
         <PackageReference Include="Soenneker.Quark.Enums.Colors" Version="3.0.1" />
         <PackageReference Include="Soenneker.Quark.Enums.Size" Version="3.0.3" />
         <PackageReference Include="Soenneker.Quark.Spans" Version="3.0.3" />
