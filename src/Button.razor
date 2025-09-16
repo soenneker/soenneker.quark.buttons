@@ -1,9 +1,10 @@
+@using System.Runtime.CompilerServices
 @using Microsoft.AspNetCore.Components.Web
 @using Soenneker.Extensions.String
-@using Soenneker.Quark.Buttons.Enums
-@using Soenneker.Quark.Enums.Colors
 @using Soenneker.Quark.Enums.Size
 @using Soenneker.Quark.Anchors
+@using Soenneker.Quark.Dtos.Colors
+@using Soenneker.Quark.Enums.ButtonTypes
 @using Soenneker.Quark.Spans
 
 @inherits Soenneker.Quark.Components.Element
@@ -11,16 +12,18 @@
 
 @if (Type == ButtonType.Link)
 {
-	<Anchor To="To" Attributes="BuildAttributes()"></Anchor>
+	<Anchor To="To" Attributes="BuildAttributes()" >
+		@ChildContent
+	</Anchor>
 }
 else
 {
 	<button @attributes="BuildAttributes()" @onclick="HandleClick" >
 		@if (Loading)
 		{
-			<Span Class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></Span>
+			<Span Class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true" ></Span>
 		}
-		@if (LoadingTemplate != null && Loading)
+		@if (LoadingTemplate is not null && Loading)
 		{
 			@LoadingTemplate
 		}
@@ -64,130 +67,111 @@ else
 	public Size Size { get; set; } = Size.Default;
 
 	[Parameter]
-	public Color Color { get; set; } = Color.Primary;
+	public Color Color { get; set; }
 
-	private string? GetSizeClass()
-	{
-		if (Size != Size.Default)
-			return $"btn-{Size.Value}";
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	private string? GetSizeClass() => Size != Size.Default ? $"btn-{Size.Value}" : null;
 
-		return null;
-	}
-
-	private string? GetColorClass()
-	{
-		return $"btn-{Color.Value}";
-	}
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	private string GetColorClass() => Color.IsTheme ? $"btn-{Color.Theme!.Value}" : $"btn-{Color.Css}";
 
 	protected override Dictionary<string, object> BuildAttributes()
 	{
-		Dictionary<string, object> attributes = base.BuildAttributes();
+		// Start from fully-merged base attributes (class/style already consolidated there)
+		Dictionary<string, object> attrs = base.BuildAttributes();
 
-		// Remove onclick attribute since we handle it directly on the element
-		attributes.Remove("onclick");
+		// We handle click explicitly on the element; remove any composed onclick from base
+		attrs.Remove("onclick");
 
-		// Add default Bootstrap button classes if no class is specified
-		if (!Class.HasContent())
+		// Determine element kind
+		bool isLink = Type == ButtonType.Link || To.HasContent();
+
+		// Figure out disabled state (treat presence of "disabled" attribute as true)
+		bool isDisabled = Disabled || Loading || (Attributes is not null && Attributes.ContainsKey("disabled"));
+
+		// Merge/ensure Bootstrap button classes
+		attrs.TryGetValue("class", out object? classObj);
+		string currentClass = classObj?.ToString() ?? string.Empty;
+
+		currentClass = EnsureClass(currentClass, "btn");
+
+		string colorClass = GetColorClass();
+		currentClass = EnsureClass(currentClass, colorClass);
+
+		string? sizeClass = GetSizeClass();
+		if (sizeClass is not null)
+			currentClass = EnsureClass(currentClass, sizeClass);
+
+		// Apply disabled visuals for anchor-style buttons
+		if (isLink && isDisabled)
+			currentClass = EnsureClass(currentClass, "disabled");
+
+		if (currentClass.Length > 0)
+			attrs["class"] = currentClass;
+
+		// Common ARIA for loading/disabled
+		if (Loading)
+			attrs["aria-busy"] = "true";
+
+		// Only set type on real <button>
+		if (!isLink)
+			attrs["type"] = Type.Value;
+
+		// Real disabled vs. aria-disabled
+		if (isLink)
 		{
-			var baseClasses = "btn";
-			string? colorClass = GetColorClass();
-			string? sizeClass = GetSizeClass();
-
-			if (colorClass != null)
+			// Anchor can't be truly disabled; use ARIA and remove focus
+			if (isDisabled)
 			{
-				baseClasses = $"{baseClasses} {colorClass}";
+				attrs["aria-disabled"] = "true";
+				attrs["tabindex"] = "-1";
+				// role is already a good idea for link-as-button
+				attrs["role"] = "button";
 			}
 			else
-			{
-				baseClasses = $"{baseClasses} btn-primary"; // default color
-			}
-
-			if (sizeClass != null)
-			{
-				baseClasses = $"{baseClasses} {sizeClass}";
-			}
-
-			attributes["class"] = AppendToClass(attributes.GetValueOrDefault("class")
-				?.ToString(), baseClasses);
+				attrs.TryAdd("role", "button");
 		}
 		else
 		{
-			// If class is specified, still add color and size classes if not already present
-			string currentClass = attributes.GetValueOrDefault("class")
-				?.ToString() ?? "";
-
-			string? colorClass = GetColorClass();
-			if (colorClass != null && !currentClass.Contains(colorClass))
-			{
-				currentClass = AppendToClass(currentClass, colorClass);
-			}
-
-			string? sizeClass = GetSizeClass();
-			if (sizeClass != null && !currentClass.Contains(sizeClass))
-			{
-				currentClass = AppendToClass(currentClass, sizeClass);
-			}
-
-			attributes["class"] = currentClass;
+			if (isDisabled)
+				attrs["disabled"] = true;
 		}
 
-		// Only add type attribute for button elements, not anchor elements
-		if (!To.HasContent())
-		{
-			attributes["type"] = Type.Value;
-		}
+		// Standard button/submit metadata
+		if (Value.HasContent()) attrs["value"] = Value!;
+		if (Name.HasContent()) attrs["name"] = Name!;
+		if (Form.HasContent()) attrs["form"] = Form!;
+		if (AutoFocus) attrs["autofocus"] = true;
 
-		// Check if disabled attribute was passed without a value (HTML-style boolean attribute)
-		bool isDisabled = Disabled || Loading;
-		if (Attributes != null && Attributes.ContainsKey("disabled"))
-		{
-			// If disabled attribute was passed, treat it as true regardless of the Disabled parameter value
-			isDisabled = true;
-		}
-
-		if (isDisabled)
-			attributes["disabled"] = true;
-
-		if (Value.HasContent())
-			attributes["value"] = Value;
-
-		if (Name.HasContent())
-			attributes["name"] = Name;
-
-		if (Form.HasContent())
-			attributes["form"] = Form;
-
-		if (AutoFocus)
-			attributes["autofocus"] = true;
-
-		if (To.HasContent())
-		{
-			attributes["role"] = "button";
-		}
-
-		return attributes;
+		// If this is acting as a link, we already render <Anchor>; nothing special beyond attrs.
+		return attrs;
 	}
 
 	protected override async Task HandleClick(MouseEventArgs args)
 	{
-		// Check if disabled attribute was passed without a value (HTML-style boolean attribute)
-		bool isDisabled = Disabled || Loading;
-		if (Attributes != null && Attributes.ContainsKey("disabled"))
-		{
-			// If disabled attribute was passed, treat it as true regardless of the Disabled parameter value
-			isDisabled = true;
-		}
+		// Respect disabled state at runtime, same semantics as in BuildAttributes
+		bool isDisabled = Disabled || Loading || (Attributes is not null && Attributes.ContainsKey("disabled"));
+		if (isDisabled)
+			return;
 
-		if (!isDisabled)
-		{
-			// Handle programmatic navigation if To is set but we're not using NavLink
-			if (To.HasContent() && !To.StartsWith("#"))
-			{
-				Navigation.NavigateTo(To);
-			}
+		// Programmatic navigation if To is set (and not a hash)
+		if (To.HasContent() && !To!.StartsWith("#"))
+			Navigation.NavigateTo(To!);
 
-			await base.HandleClick(args);
-		}
+		await base.HandleClick(args);
+	}
+
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	private static string EnsureClass(string existing, string toAdd)
+	{
+		if (toAdd.IsNullOrEmpty())
+			return existing;
+
+		if (existing.IsNullOrEmpty())
+			return toAdd;
+
+		// Cheap contains check; no allocations
+		return existing.Contains(toAdd, StringComparison.Ordinal) ? existing : $"{existing} {toAdd}";
 	}
 
 }
