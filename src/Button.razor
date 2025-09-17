@@ -99,6 +99,7 @@ else
 		currentClass = EnsureClass(currentClass, colorClass);
 
 		string? sizeClass = GetSizeClass();
+
 		if (sizeClass is not null)
 			currentClass = EnsureClass(currentClass, sizeClass);
 
@@ -159,19 +160,6 @@ else
 			Navigation.NavigateTo(To!);
 
 		await base.HandleClick(args);
-	}
-
-	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	private static string EnsureClass(string existing, string toAdd)
-	{
-		if (toAdd.IsNullOrEmpty())
-			return existing;
-
-		if (existing.IsNullOrEmpty())
-			return toAdd;
-
-		// Cheap contains check; no allocations
-		return existing.Contains(toAdd, StringComparison.Ordinal) ? existing : $"{existing} {toAdd}";
 	}
 
 }
