@@ -1,9 +1,10 @@
-@using System.Runtime.CompilerServices
+﻿@using System.Runtime.CompilerServices
 @using Microsoft.AspNetCore.Components.Web
 @using Soenneker.Extensions.String
 @using Soenneker.Quark.Enums.Size
 @using Soenneker.Quark.Anchors
-@using Soenneker.Quark.Dtos.Colors
+@using Soenneker.Quark.Components.Builders
+@using Soenneker.Quark.Components.Builders.Colors
 @using Soenneker.Quark.Enums.ButtonTypes
 @using Soenneker.Quark.Spans
 
@@ -36,7 +37,9 @@ else
 
 @code {
 
-	[Parameter]
+	public override string? Name { get; set; } = "Button";
+
+    [Parameter]
 	public ButtonType Type { get; set; } = ButtonType.Button;
 
 	[Parameter]
@@ -52,9 +55,6 @@ else
 	public string? Value { get; set; }
 
 	[Parameter]
-	public string? Name { get; set; }
-
-	[Parameter]
 	public string? Form { get; set; }
 
 	[Parameter]
@@ -67,21 +67,17 @@ else
 	public Size Size { get; set; } = Size.Default;
 
 	[Parameter]
-	public Color Color { get; set; }
+	public CssValue<ColorBuilder>? Color { get; set; }
 
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	private string? GetSizeClass() => Size != Size.Default ? $"btn-{Size.Value}" : null;
 
-	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	private string GetColorClass() => Color.IsTheme ? $"btn-{Color.Theme!.Value}" : $"btn-{Color.Css}";
-
 	protected override Dictionary<string, object> BuildAttributes()
 	{
-		// Start from fully-merged base attributes (class/style already consolidated there)
-		Dictionary<string, object> attrs = base.BuildAttributes();
+		base.BuildAttributes();
 
 		// We handle click explicitly on the element; remove any composed onclick from base
-		attrs.Remove("onclick");
+		Attributes.Remove("onclick");
 
 		// Determine element kind
 		bool isLink = Type == ButtonType.Link || To.HasContent();
@@ -89,34 +85,47 @@ else
 		// Figure out disabled state (treat presence of "disabled" attribute as true)
 		bool isDisabled = Disabled || Loading || (Attributes is not null && Attributes.ContainsKey("disabled"));
 
-		// Merge/ensure Bootstrap button classes
-		attrs.TryGetValue("class", out object? classObj);
-		string currentClass = classObj?.ToString() ?? string.Empty;
+		// Add Bootstrap button classes
+		AppendToClassAttr(Attributes, "btn");
 
-		currentClass = EnsureClass(currentClass, "btn");
+        if (Color is not null && !Color.Value.IsEmpty)
+        {
+            string v = Color.Value.ToString().Trim();
 
-		string colorClass = GetColorClass();
-		currentClass = EnsureClass(currentClass, colorClass);
+            if (Color.Value.IsCssClass)
+            {
+                if (v.StartsWith("btn-", StringComparison.Ordinal))
+                    AppendToClassAttr(Attributes, v);
+                else
+                    AppendToClassAttr(Attributes, $"btn-{v}");
+            }
+            else
+            {
+                // Literal CSS value → straight style
+                if (!Attributes.TryGetValue("style", out var existing))
+                    Attributes["style"] = $"background-color:{v};border-color:{v};";
+                else
+                    Attributes["style"] = $"{existing}background-color:{v};border-color:{v};";
+            }
+        }
 
+		// Add size class if not default
 		string? sizeClass = GetSizeClass();
 
 		if (sizeClass is not null)
-			currentClass = EnsureClass(currentClass, sizeClass);
+			AppendToClassAttr(Attributes, sizeClass);
 
 		// Apply disabled visuals for anchor-style buttons
 		if (isLink && isDisabled)
-			currentClass = EnsureClass(currentClass, "disabled");
-
-		if (currentClass.Length > 0)
-			attrs["class"] = currentClass;
+			AppendToClassAttr(Attributes, "disabled");
 
 		// Common ARIA for loading/disabled
 		if (Loading)
-			attrs["aria-busy"] = "true";
+			Attributes["aria-busy"] = "true";
 
 		// Only set type on real <button>
 		if (!isLink)
-			attrs["type"] = Type.Value;
+			Attributes["type"] = Type.Value;
 
 		// Real disabled vs. aria-disabled
 		if (isLink)
@@ -124,28 +133,28 @@ else
 			// Anchor can't be truly disabled; use ARIA and remove focus
 			if (isDisabled)
 			{
-				attrs["aria-disabled"] = "true";
-				attrs["tabindex"] = "-1";
+				Attributes["aria-disabled"] = "true";
+				Attributes["tabindex"] = "-1";
 				// role is already a good idea for link-as-button
-				attrs["role"] = "button";
+				Attributes["role"] = "button";
 			}
 			else
-				attrs.TryAdd("role", "button");
+				Attributes.TryAdd("role", "button");
 		}
 		else
 		{
 			if (isDisabled)
-				attrs["disabled"] = true;
+				Attributes["disabled"] = true;
 		}
 
 		// Standard button/submit metadata
-		if (Value.HasContent()) attrs["value"] = Value!;
-		if (Name.HasContent()) attrs["name"] = Name!;
-		if (Form.HasContent()) attrs["form"] = Form!;
-		if (AutoFocus) attrs["autofocus"] = true;
+		if (Value.HasContent()) Attributes["value"] = Value!;
+		if (Name.HasContent()) Attributes["name"] = Name!;
+		if (Form.HasContent()) Attributes["form"] = Form!;
+		if (AutoFocus) Attributes["autofocus"] = true;
 
 		// If this is acting as a link, we already render <Anchor>; nothing special beyond attrs.
-		return attrs;
+		return Attributes;
 	}
 
 	protected override async Task HandleClick(MouseEventArgs args)
