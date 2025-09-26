@@ -44,8 +44,7 @@
 
     <ItemGroup>
         <PackageReference Include="Soenneker.Quark.Anchors" Version="3.0.17" />
-        <PackageReference Include="Soenneker.Quark.Components.Builders" Version="3.0.4" />
-        <PackageReference Include="Soenneker.Quark.Enums.ButtonTypes" Version="3.0.3" />
-        <PackageReference Include="Soenneker.Quark.Spans" Version="3.0.19" />
+        <PackageReference Include="Soenneker.Quark.Enums.ButtonTypes" Version="3.0.4" />
+        <PackageReference Include="Soenneker.Quark.Spans" Version="3.0.20" />
     </ItemGroup>
 </Project>
